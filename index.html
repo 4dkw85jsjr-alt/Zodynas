@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E6EBE5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121A19" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Žodynėlis">
+<title>Žodynėlis</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%231D3533'/><rect width='14' height='100' fill='%23A86A07'/><text x='57' y='74' font-size='64' text-anchor='middle' fill='%23FBFCF9' font-family='Georgia' font-weight='bold'>Ž</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,500;7..72,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E6EBE5; --paper:#FBFCF9; --ink:#1D3533; --ink-soft:#4D615E; --ink-faint:#7A8A87;
+  --amber:#A86A07; --amber-soft:#F3E3C4; --line:#CBD4CC; --known:#3F7A55; --err:#A8322A;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#121A19; --paper:#1C2625; --ink:#E4ECE9; --ink-soft:#A9B9B5; --ink-faint:#7D8F8B;
+    --amber:#E3A642; --amber-soft:#3A2E1A; --line:#2E3B39; --known:#7BC394; --err:#F08A80;
+    color-scheme: dark;
+  }
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Literata",Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased}
+main{max-width:660px;margin:0 auto;padding:28px 18px 48px}
+h1{font-size:28px;font-weight:600;margin:0 0 4px;letter-spacing:-0.01em}
+h2{font-size:18px;font-weight:600;margin:28px 0 8px}
+.sub{margin:0 0 18px;color:var(--ink-soft);font-size:15px;line-height:1.5}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 -2px 12px;scrollbar-width:none}
+.chip{flex:0 0 auto;font:inherit;font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip small{opacity:.75;margin-left:4px}
+.chip:focus-visible,.b:focus-visible,.card:focus-visible,.entry-head:focus-visible{outline:none;box-shadow:0 0 0 3px var(--amber-soft),0 0 0 5px var(--amber)}
+.syncline{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-faint);margin:0 0 18px;min-height:30px}
+.syncline .b{font-size:13px;padding:4px 12px}
+.syncline .err{color:var(--err)}
+
+.card{position:relative;background:var(--paper);border-radius:6px 14px 14px 6px;border-left:5px solid var(--amber);min-height:300px;padding:28px 28px 24px 30px;cursor:pointer;display:flex;flex-direction:column;justify-content:center;box-shadow:0 1px 0 var(--line),0 12px 30px -18px rgba(20,40,38,.35);outline:none}
+.card.back{border-left-color:var(--known);cursor:default}
+.side{font-size:13px;color:var(--ink-faint);margin:0 0 12px}
+.lt{font-size:28px;font-weight:600;line-height:1.3;margin:0 0 6px;word-break:break-word}
+.lemma{font-size:15px;color:var(--ink-soft);margin:0 0 16px}
+.ctx{font-size:16px;line-height:1.7;color:var(--ink-soft);margin:6px 0 0}
+.ctx mark{background:none;color:var(--ink);font-weight:600;border-bottom:2px solid var(--amber)}
+.ru{font-size:25px;font-weight:500;line-height:1.35;margin:0 0 10px;color:var(--amber)}
+.facts{font-size:15px;line-height:1.7;color:var(--ink-soft);margin:0 0 10px}
+.facts b{font-weight:600;color:var(--ink)}
+.gram{font-size:15px;line-height:1.7;margin:8px 0 10px;padding:10px 12px;border-radius:8px;background:var(--amber-soft);color:var(--ink)}
+.src{font-size:13px;color:var(--ink-faint);margin:10px 0 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src a{color:var(--ink-faint)}
+.tap{font-size:13px;color:var(--ink-faint);margin:18px 0 0}
+.grades{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.grades .b{padding:10px 6px;border-radius:12px;text-align:center}
+.grades .b small{display:block;font-size:12px;color:var(--ink-faint);margin-top:2px}
+.grades .b[data-g="0"]{border-color:var(--err);color:var(--err)}
+.grades .b[data-g="3"]{border-color:var(--known);color:var(--known)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px}
+.toolbar .spacer{flex:1}
+.empty{background:var(--paper);border-radius:6px 14px 14px 6px;border-left:5px solid var(--line);padding:26px 26px 24px;color:var(--ink-soft);line-height:1.65}
+.empty b{color:var(--ink);font-weight:600}
+
+.b{font:inherit;font-size:15px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+.b.main{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.b.danger{color:var(--err);border-color:var(--err)}
+.b:disabled{opacity:.5;cursor:default}
+
+label{display:block;font-size:13px;color:var(--ink-faint);margin:14px 0 4px}
+input,textarea{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 11px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 3px var(--amber-soft)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.status{font-size:14px;color:var(--ink-soft);margin:10px 0 0;min-height:1.4em}
+.status.err{color:var(--err)} .status.ok{color:var(--known)}
+.hint{font-size:14px;line-height:1.6;color:var(--ink-soft);margin:4px 0 0}
+.hint ol{padding-left:20px;margin:6px 0}
+code{font-family:inherit;background:var(--amber-soft);padding:1px 5px;border-radius:5px}
+
+.list{list-style:none;margin:0;padding:0}
+.entry{background:var(--paper);border-radius:4px 10px 10px 4px;border-left:4px solid var(--amber);margin:0 0 8px;box-shadow:0 1px 0 var(--line)}
+.entry.learned{border-left-color:var(--known)}
+.entry-head{display:flex;gap:12px;align-items:baseline;padding:11px 14px;cursor:pointer;border-radius:4px 10px 10px 4px}
+.entry-head b{font-weight:600;font-size:17px}
+.entry-head span{color:var(--ink-soft);font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry-body{padding:0 14px 14px}
+.count{font-size:14px;color:var(--ink-faint)}
+[hidden]{display:none !important}
+</style>
+</head>
+<body>
+<main>
+  <h1>Žodynėlis</h1>
+  <p class="sub" id="stats"></p>
+  <nav class="tabs" aria-label="Разделы">
+    <button class="chip" data-view="study" aria-pressed="true">Повторение <small id="dueCount"></small></button>
+    <button class="chip" data-view="list" aria-pressed="false">Словарь <small id="allCount"></small></button>
+    <button class="chip" data-view="add" aria-pressed="false">Добавить</button>
+    <button class="chip" data-view="settings" aria-pressed="false">Настройки</button>
+  </nav>
+  <div class="syncline"><span id="syncText"></span><button class="b" id="syncBtn">Синхронизировать</button></div>
+
+  <section id="v-study"></section>
+  <section id="v-list" hidden></section>
+  <section id="v-add" hidden></section>
+  <section id="v-settings" hidden></section>
+</main>
+
+<script>
+/* Žodynėlis — общее ядро: перевод через Claude API, синхронизация через GitHub Gist, интервальное повторение */
+const ZOD = (() => {
+  const DEFAULT_MODEL = 'claude-sonnet-5-5';
+  const GIST_FILE = 'zodynelis.json';
+  const DAY = 864e5;
+
+  const SYSTEM = `Ты — литовско-русский словарь и преподаватель литовской грамматики для русскоязычного ученика.
+Тебе дают фрагмент (слово или фразу), выделенный в литовском тексте, и, если есть, предложение, в котором он встретился.
+Ответь ТОЛЬКО объектом JSON без пояснений и без обрамления в \`\`\`:
+{
+  "lemma": "словарная форма: для существительного — им. п. ед. ч., для глагола — инфинитив, для прилагательного — м. р. им. п.; для фразы — её исходная форма",
+  "forms": "основные формы: сущ. — им. и род. п. ед. ч. и тип склонения (напр. «namas, namo, 1-е скл.»); глагол — три основные формы (напр. «dirbti, dirba, dirbo»); прил. — м. и ж. р.; для фразы — пустая строка",
+  "pos": "часть речи по-русски (для фразы — «фраза» или «выражение»)",
+  "translation": "1–4 основных значения через запятую",
+  "context_translation": "как перевести фрагмент именно в этом предложении",
+  "sentence_translation": "перевод всего предложения (пустая строка, если предложения нет)",
+  "grammar": "1–3 коротких предложения по-русски: в какой форме стоит выделенное слово (падеж, число, род, лицо, время, наклонение), чем управляет (напр. «laukti + род. п.»), полезная особенность; для фразы — её строение и употребление"
+}
+Не ставь знаки ударения. Если фрагмент не литовский — всё равно переведи и отметь это в grammar.`;
+
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const norm = s => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
+
+  function apiError(status, data) {
+    const msg = (data && data.error && data.error.message) || '';
+    if (status === 401) return 'Ключ Claude API не подошёл. Проверьте его в настройках.';
+    if (status === 404) return 'Модель не найдена. Укажите другую модель в настройках. ' + msg;
+    if (status === 429) return 'Слишком много запросов к Claude. Подождите минуту.';
+    if (status === 400 && /credit|balance/i.test(msg)) return 'На счёте Claude API закончились средства. Пополните его на console.anthropic.com.';
+    return `Ошибка Claude API (${status}). ${msg}`;
+  }
+
+  async function translate({ apiKey, model, text, sentence }) {
+    if (!apiKey) throw new Error('Не указан ключ Claude API. Откройте настройки.');
+    const user = sentence && norm(sentence) !== norm(text)
+      ? `Фрагмент: ${text}\nПредложение: ${sentence}`
+      : `Фрагмент: ${text}`;
+    let res;
+    try {
+      res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: model || DEFAULT_MODEL,
+          max_tokens: 900,
+          system: SYSTEM,
+          messages: [{ role: 'user', content: user }]
+        })
+      });
+    } catch (e) {
+      throw new Error('Нет связи с Claude API. Проверьте интернет.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(apiError(res.status, data));
+    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('Claude ответил в неожиданном виде. Попробуйте ещё раз.');
+    try { return JSON.parse(m[0]); }
+    catch (e) { throw new Error('Не удалось разобрать ответ Claude. Попробуйте ещё раз.'); }
+  }
+
+  function makeCard({ text, sentence, url, title, info }) {
+    const now = Date.now();
+    info = info || {};
+    return {
+      id: uid(), text: (text || '').trim(),
+      lemma: info.lemma || '', forms: info.forms || '', pos: info.pos || '',
+      translation: info.translation || '', contextTranslation: info.context_translation || '',
+      sentence: sentence || '', sentenceTranslation: info.sentence_translation || '',
+      grammar: info.grammar || '', note: '',
+      url: url || '', title: title || '',
+      createdAt: now, updatedAt: now, deleted: false,
+      srs: { level: 0, due: now, reps: 0 }
+    };
+  }
+
+  function findDuplicate(cards, text, lemma) {
+    const t = norm(text), l = norm(lemma);
+    return cards.find(c => !c.deleted && (norm(c.text) === t || (l && norm(c.lemma) === l))) || null;
+  }
+
+  function tombstone(card) {
+    return { id: card.id, deleted: true, createdAt: card.createdAt, updatedAt: Date.now() };
+  }
+
+  function merge(a, b) {
+    const map = new Map();
+    for (const c of [...(a || []), ...(b || [])]) {
+      if (!c || !c.id) continue;
+      const p = map.get(c.id);
+      if (!p || (c.updatedAt || 0) > (p.updatedAt || 0)) map.set(c.id, c);
+    }
+    return [...map.values()].sort((x, y) => (y.createdAt || 0) - (x.createdAt || 0));
+  }
+
+  const signature = cards => cards.map(c => c.id + ':' + (c.updatedAt || 0)).sort().join('|');
+
+  async function gh(token, path, opts = {}) {
+    let res;
+    try {
+      res = await fetch('https://api.github.com' + path, {
+        ...opts,
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'Authorization': 'Bearer ' + token,
+          'X-GitHub-Api-Version': '2022-11-28',
+          ...(opts.body ? { 'Content-Type': 'application/json' } : {})
+        }
+      });
+    } catch (e) {
+      throw new Error('Нет связи с GitHub. Проверьте интернет.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('Токен GitHub не подошёл. Проверьте его в настройках.');
+      if (res.status === 404) throw new Error('Хранилище (Gist) не найдено. Проверьте его номер и права токена (нужно право «gist»).');
+      throw new Error(`Ошибка GitHub (${res.status}). ${data.message || ''}`);
+    }
+    return data;
+  }
+
+  async function readGist(token, id) {
+    const g = await gh(token, '/gists/' + id);
+    const f = g.files && g.files[GIST_FILE];
+    if (!f) return [];
+    let content = f.content;
+    if (f.truncated) content = await (await fetch(f.raw_url)).text();
+    try { return JSON.parse(content).cards || []; } catch (e) { return []; }
+  }
+
+  async function writeGist(token, id, cards) {
+    const files = { [GIST_FILE]: { content: JSON.stringify({ app: 'zodynelis', version: 1, cards }) } };
+    if (id) {
+      await gh(token, '/gists/' + id, { method: 'PATCH', body: JSON.stringify({ files }) });
+      return id;
+    }
+    const g = await gh(token, '/gists', {
+      method: 'POST',
+      body: JSON.stringify({ description: 'Žodynėlis — личный литовско-русский словарь', public: false, files })
+    });
+    return g.id;
+  }
+
+  async function sync(local, token, gistId) {
+    if (!token) throw new Error('Не указан токен GitHub. Откройте настройки.');
+    const remote = gistId ? await readGist(token, gistId) : [];
+    const merged = merge(local, remote);
+    let id = gistId;
+    if (!gistId || signature(merged) !== signature(remote)) id = await writeGist(token, gistId, merged);
+    return { cards: merged, gistId: id };
+  }
+
+  // Интервальное повторение: уровни и интервалы в днях
+  const INTERVALS = [0, 1, 2, 4, 7, 15, 30, 60, 120];
+  function review(card, grade) { // 0 — не помню, 1 — трудно, 2 — помню, 3 — легко
+    const now = Date.now();
+    const s = { level: 0, due: 0, reps: 0, ...(card.srs || {}) };
+    if (grade === 0) { s.level = 0; s.due = now + 10 * 60e3; }
+    else if (grade === 1) { s.level = Math.max(1, s.level); s.due = now + Math.max(1, Math.round(INTERVALS[s.level] / 2)) * DAY; }
+    else { s.level = Math.min(INTERVALS.length - 1, s.level + (grade === 3 ? 2 : 1)); s.due = now + INTERVALS[s.level] * DAY; }
+    s.reps = (s.reps || 0) + 1;
+    return { ...card, srs: s, updatedAt: now };
+  }
+  const isDue = c => !c.deleted && ((c.srs && c.srs.due) || 0) <= Date.now();
+
+  return { DEFAULT_MODEL, translate, makeCard, findDuplicate, tombstone, merge, sync, review, isDue, norm, DAY };
+})();
+if (typeof self !== 'undefined') self.ZOD = ZOD;
+
+</script>
+<script>
+(() => {
+const LS_CARDS = 'zod_cards', LS_SET = 'zod_settings', LS_SYNC = 'zod_last_sync', LS_DIR = 'zod_direction';
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const read = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+let cards = read(LS_CARDS, []);
+let settings = read(LS_SET, {});
+let view = 'study';
+let flipped = false;
+let current = null;
+let direction = read(LS_DIR, 'lt');
+let openEntry = null;
+let syncTimer = null;
+let syncing = false;
+
+const live = () => cards.filter(c => !c.deleted);
+const dueList = () => live().filter(ZOD.isDue).sort((a, b) => (a.srs?.due || 0) - (b.srs?.due || 0));
+
+function save(changed) {
+  write(LS_CARDS, cards);
+  renderStats();
+  if (changed && settings.githubToken) { clearTimeout(syncTimer); syncTimer = setTimeout(sync, 1500); }
+}
+
+function highlight(sentence, text) {
+  const i = sentence.toLowerCase().indexOf((text || '').toLowerCase());
+  if (!text || i < 0) return esc(sentence);
+  return esc(sentence.slice(0, i)) + '<mark>' + esc(sentence.slice(i, i + text.length)) + '</mark>' + esc(sentence.slice(i + text.length));
+}
+
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+function renderStats() {
+  const n = live().length, d = dueList().length;
+  $('#stats').textContent = n
+    ? `В словаре ${n} ${plural(n, 'слово', 'слова', 'слов')}. Сегодня повторить: ${d}.`
+    : 'Личный литовско-русский словарь.';
+  $('#dueCount').textContent = d || '';
+  $('#allCount').textContent = n || '';
+  const last = read(LS_SYNC, 0);
+  if (!syncing) {
+    $('#syncText').innerHTML = !settings.githubToken
+      ? 'Синхронизация не настроена.'
+      : last ? 'Синхронизировано: ' + esc(new Date(last).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })) : 'Ещё не синхронизировано.';
+  }
+  $('#syncBtn').hidden = !settings.githubToken;
+}
+
+async function sync() {
+  if (!settings.githubToken || syncing) return;
+  syncing = true;
+  $('#syncBtn').disabled = true;
+  $('#syncText').textContent = 'Синхронизирую…';
+  try {
+    const r = await ZOD.sync(cards, settings.githubToken, settings.gistId);
+    cards = ZOD.merge(cards, r.cards);
+    if (r.gistId !== settings.gistId) { settings.gistId = r.gistId; write(LS_SET, settings); }
+    write(LS_CARDS, cards);
+    write(LS_SYNC, Date.now());
+    syncing = false;
+    renderStats();
+    if (view === 'list') renderList();
+    if (view === 'study' && !flipped) { current = null; renderStudy(); }
+    if (view === 'settings') renderSettings();
+  } catch (e) {
+    syncing = false;
+    renderStats();
+    $('#syncText').innerHTML = '<span class="err">' + esc(e.message) + '</span>';
+  }
+  $('#syncBtn').disabled = false;
+}
+
+/* ---------- Повторение ---------- */
+function renderStudy() {
+  const el = $('#v-study');
+  const due = dueList();
+  if (!live().length) {
+    el.innerHTML = `<div class="empty"><b>Словарь пока пуст.</b><br>Выделите литовское слово на любой странице, нажмите правую кнопку мыши и выберите «Перевести и сохранить». Или добавьте слово вручную в разделе «Добавить».</div>`;
+    return;
+  }
+  if (!due.length) {
+    const next = live().map(c => c.srs?.due || 0).sort((a, b) => a - b)[0];
+    const when = next ? new Date(next).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : '';
+    el.innerHTML = `<div class="empty"><b>На сегодня всё повторено.</b><br>Следующее слово ждёт вас ${esc(when)}.</div>`;
+    return;
+  }
+  if (!current || !due.find(c => c.id === current.id)) { current = due[0]; flipped = false; }
+  const c = current;
+  const lemmaLine = c.lemma && c.lemma.toLowerCase() !== c.text.toLowerCase() ? c.lemma : '';
+  const front = direction === 'lt'
+    ? `<p class="side">Литовский</p><p class="lt">${esc(c.text)}</p>${c.sentence ? `<p class="ctx">${highlight(c.sentence, c.text)}</p>` : ''}`
+    : `<p class="side">Русский</p><p class="lt">${esc(c.contextTranslation || c.translation)}</p>${c.sentenceTranslation ? `<p class="ctx">${esc(c.sentenceTranslation)}</p>` : ''}`;
+  const back = `
+    <p class="side">${direction === 'lt' ? 'Перевод' : 'По-литовски'}</p>
+    ${direction === 'lt' ? `<p class="ru">${esc(c.translation)}</p>` : `<p class="lt">${esc(c.text)}</p><p class="ru">${esc(c.translation)}</p>`}
+    <p class="facts">
+      ${c.contextTranslation && direction === 'lt' ? `<b>В этом предложении:</b> ${esc(c.contextTranslation)}<br>` : ''}
+      ${lemmaLine ? `<b>Словарная форма:</b> ${esc(lemmaLine)}<br>` : ''}
+      ${c.forms ? `<b>Формы:</b> ${esc(c.forms)}<br>` : ''}
+      ${c.pos ? `<b>Часть речи:</b> ${esc(c.pos)}` : ''}
+    </p>
+    ${c.grammar ? `<p class="gram">${esc(c.grammar)}</p>` : ''}
+    ${c.sentence ? `<p class="ctx">${highlight(c.sentence, c.text)}</p>` : ''}
+    ${c.sentenceTranslation ? `<p class="ctx">${esc(c.sentenceTranslation)}</p>` : ''}
+    ${c.note ? `<p class="facts"><b>Заметка:</b> ${esc(c.note)}</p>` : ''}
+    ${c.url ? `<p class="src">Источник: <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title || c.url)}</a></p>` : ''}`;
+  el.innerHTML = `
+    <div class="toolbar">
+      <span class="count">Осталось: ${due.length}</span><span class="spacer"></span>
+      <button class="chip" id="dirBtn" aria-pressed="false">${direction === 'lt' ? 'LT → RU' : 'RU → LT'}</button>
+    </div>
+    <div class="card ${flipped ? 'back' : ''}" tabindex="0" id="card" aria-live="polite">
+      ${flipped ? back : front + '<p class="tap">Нажмите на карточку или пробел, чтобы увидеть ответ.</p>'}
+    </div>
+    ${flipped ? `<div class="grades" role="group" aria-label="Насколько хорошо вы помнили">
+      <button class="b" data-g="0">Не помню<small>1</small></button>
+      <button class="b" data-g="1">Трудно<small>2</small></button>
+      <button class="b" data-g="2">Помню<small>3</small></button>
+      <button class="b" data-g="3">Легко<small>4</small></button></div>` : ''}`;
+  $('#card').onclick = e => { if (!flipped && !e.target.closest('a')) { flipped = true; renderStudy(); } };
+  $('#dirBtn').onclick = () => { direction = direction === 'lt' ? 'ru' : 'lt'; write(LS_DIR, direction); flipped = false; renderStudy(); };
+  el.querySelectorAll('[data-g]').forEach(b => b.onclick = () => grade(+b.dataset.g));
+}
+
+function grade(g) {
+  if (!current || !flipped) return;
+  const i = cards.findIndex(c => c.id === current.id);
+  if (i >= 0) cards[i] = ZOD.review(cards[i], g);
+  current = null; flipped = false;
+  save(true);
+  renderStudy();
+}
+
+document.addEventListener('keydown', e => {
+  if (view !== 'study' || /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if ((e.key === ' ' || e.key === 'Enter') && !flipped && current) { e.preventDefault(); flipped = true; renderStudy(); }
+  else if (flipped && ['1', '2', '3', '4'].includes(e.key)) grade(+e.key - 1);
+});
+
+/* ---------- Словарь ---------- */
+function renderList() {
+  const el = $('#v-list');
+  const q = el.querySelector('#search')?.value || '';
+  if (!el.querySelector('#search')) {
+    el.innerHTML = `<input id="search" type="search" placeholder="Искать по-литовски или по-русски" aria-label="Поиск"><p class="count" id="found"></p><ul class="list" id="entries"></ul>`;
+    el.querySelector('#search').oninput = renderEntries;
+  }
+  renderEntries();
+}
+function renderEntries() {
+  const q = ZOD.norm($('#search').value);
+  const items = live().filter(c => !q || [c.text, c.lemma, c.translation, c.contextTranslation].some(v => ZOD.norm(v).includes(q)));
+  $('#found').textContent = q ? `Найдено: ${items.length}` : '';
+  $('#entries').innerHTML = items.length ? items.map(c => `
+    <li class="entry ${(c.srs?.level || 0) >= 5 ? 'learned' : ''}" data-id="${esc(c.id)}">
+      <div class="entry-head" tabindex="0" role="button" aria-expanded="${openEntry === c.id}"><b>${esc(c.text)}</b><span>${esc(c.translation)}</span></div>
+      ${openEntry === c.id ? entryEditor(c) : ''}
+    </li>`).join('') : `<p class="hint">${q ? 'Ничего не найдено.' : 'Словарь пока пуст.'}</p>`;
+  $('#entries').querySelectorAll('.entry-head').forEach(h => {
+    const toggle = () => { const id = h.parentElement.dataset.id; openEntry = openEntry === id ? null : id; renderEntries(); };
+    h.onclick = toggle;
+    h.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+  });
+  const open = $('#entries').querySelector('.entry-body');
+  if (open) bindEditor(open);
+}
+const FIELDS = [
+  ['text', 'Слово или фраза'], ['lemma', 'Словарная форма'], ['forms', 'Формы'], ['pos', 'Часть речи'],
+  ['translation', 'Перевод'], ['contextTranslation', 'В этом предложении'], ['grammar', 'Грамматика', 3],
+  ['sentence', 'Предложение', 2], ['sentenceTranslation', 'Перевод предложения', 2], ['note', 'Заметка', 2]
+];
+function entryEditor(c) {
+  return `<div class="entry-body">${FIELDS.map(([k, label, rows]) => `<label for="f-${k}">${label}</label>` +
+    (rows ? `<textarea id="f-${k}" rows="${rows}">${esc(c[k])}</textarea>` : `<input id="f-${k}" value="${esc(c[k])}">`)).join('')}
+    ${c.url ? `<p class="src">Источник: <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.title || c.url)}</a></p>` : ''}
+    <div class="row"><button class="b main" data-a="save">Сохранить</button><button class="b" data-a="reset">Повторить заново</button><span style="flex:1"></span><button class="b danger" data-a="del">Удалить</button></div></div>`;
+}
+function bindEditor(body) {
+  const id = body.parentElement.dataset.id;
+  const i = cards.findIndex(c => c.id === id);
+  body.querySelector('[data-a=save]').onclick = () => {
+    const c = { ...cards[i] };
+    FIELDS.forEach(([k]) => { c[k] = body.querySelector('#f-' + k).value.trim(); });
+    c.updatedAt = Date.now(); cards[i] = c; openEntry = null; save(true); renderEntries();
+  };
+  body.querySelector('[data-a=reset]').onclick = () => {
+    cards[i] = { ...cards[i], srs: { level: 0, due: Date.now(), reps: 0 }, updatedAt: Date.now() }; save(true); renderEntries();
+  };
+  body.querySelector('[data-a=del]').onclick = () => {
+    if (!confirm(`Удалить «${cards[i].text}» из словаря?`)) return;
+    cards[i] = ZOD.tombstone(cards[i]); openEntry = null; save(true); renderEntries();
+  };
+}
+
+/* ---------- Добавить ---------- */
+let draft = null;
+function renderAdd() {
+  const el = $('#v-add');
+  if (!draft) {
+    el.innerHTML = `
+      <label for="a-text">Слово или фраза по-литовски</label><input id="a-text" autocomplete="off">
+      <label for="a-sent">Предложение, в котором оно встретилось (необязательно)</label><textarea id="a-sent" rows="3"></textarea>
+      <div class="row"><button class="b main" id="a-go">Перевести</button></div>
+      <p class="status" id="a-status"></p>`;
+    const go = async () => {
+      const text = $('#a-text').value.replace(/\s+/g, ' ').trim();
+      const sentence = $('#a-sent').value.replace(/\s+/g, ' ').trim();
+      if (!text) return $('#a-text').focus();
+      if (!settings.claudeKey) { setStatus('a-status', 'Вставьте ключ Claude API в настройках.', 'err'); return; }
+      $('#a-go').disabled = true; setStatus('a-status', 'Перевожу…');
+      try {
+        const info = await ZOD.translate({ apiKey: settings.claudeKey, model: settings.model, text, sentence });
+        draft = { text, sentence, info, duplicate: ZOD.findDuplicate(cards, text, info.lemma) };
+        renderAdd();
+      } catch (e) { setStatus('a-status', e.message, 'err'); $('#a-go').disabled = false; }
+    };
+    $('#a-go').onclick = go;
+    $('#a-text').onkeydown = e => { if (e.key === 'Enter') go(); };
+    return;
+  }
+  const i = draft.info;
+  el.innerHTML = `
+    <div class="card back" style="cursor:default">
+      <p class="lt">${esc(draft.text)}</p>
+      <p class="lemma">${esc([i.lemma && i.lemma.toLowerCase() !== draft.text.toLowerCase() ? i.lemma : '', i.forms, i.pos].filter(Boolean).join(';  '))}</p>
+      <label for="d-tr">Перевод</label><input id="d-tr" value="${esc(i.translation)}">
+      <label for="d-ctx">В этом предложении</label><input id="d-ctx" value="${esc(i.context_translation)}">
+      <label for="d-gr">Грамматика</label><textarea id="d-gr" rows="3">${esc(i.grammar)}</textarea>
+      ${draft.sentence ? `<p class="ctx">${highlight(draft.sentence, draft.text)}</p><p class="ctx">${esc(i.sentence_translation)}</p>` : ''}
+      ${draft.duplicate ? `<p class="status">Похожее уже есть в словаре: «${esc(draft.duplicate.text)}» — ${esc(draft.duplicate.translation)}</p>` : ''}
+      <div class="row"><button class="b main" id="d-save">Сохранить</button><button class="b" id="d-cancel">Отмена</button></div>
+    </div>`;
+  $('#d-save').onclick = () => {
+    i.translation = $('#d-tr').value.trim(); i.context_translation = $('#d-ctx').value.trim(); i.grammar = $('#d-gr').value.trim();
+    cards.unshift(ZOD.makeCard({ text: draft.text, sentence: draft.sentence, info: i }));
+    draft = null; save(true); renderAdd();
+    setStatus('a-status', 'Сохранено в словарь.', 'ok');
+  };
+  $('#d-cancel').onclick = () => { draft = null; renderAdd(); };
+}
+function setStatus(id, text, cls) { const s = document.getElementById(id); if (s) { s.textContent = text; s.className = 'status ' + (cls || ''); } }
+
+/* ---------- Настройки ---------- */
+function renderSettings() {
+  const el = $('#v-settings');
+  el.innerHTML = `
+    <h2 style="margin-top:4px">Синхронизация</h2>
+    <p class="hint">Вставьте тот же токен GitHub и номер хранилища, что и в расширении для браузера. Тогда словарь будет общим на всех устройствах.</p>
+    <label for="s-gh">Токен GitHub</label><input id="s-gh" type="password" autocomplete="off" value="${esc(settings.githubToken)}" placeholder="ghp_…">
+    <label for="s-gist">Номер хранилища (Gist ID)</label><input id="s-gist" autocomplete="off" value="${esc(settings.gistId)}" placeholder="из настроек расширения">
+    <h2>Перевод при ручном добавлении</h2>
+    <p class="hint">Нужен только для раздела «Добавить». Ключ берётся на <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.</p>
+    <label for="s-key">Ключ Claude API</label><input id="s-key" type="password" autocomplete="off" value="${esc(settings.claudeKey)}" placeholder="sk-ant-…">
+    <label for="s-model">Модель</label><input id="s-model" autocomplete="off" value="${esc(settings.model)}" placeholder="${ZOD.DEFAULT_MODEL}">
+    <div class="row"><button class="b main" id="s-save">Сохранить и синхронизировать</button></div>
+    <p class="status" id="s-status"></p>
+    <h2>Резервная копия</h2>
+    <p class="hint">Файл со всем словарём, который можно сохранить у себя или загрузить обратно.</p>
+    <div class="row"><button class="b" id="s-export">Скачать словарь</button>
+      <label class="b" style="margin:0;font-size:15px;color:var(--ink)">Загрузить из файла<input type="file" id="s-import" accept=".json,application/json" hidden></label></div>
+    <h2>На телефоне</h2>
+    <p class="hint">Откройте эту страницу в Safari или Chrome и добавьте её на главный экран: в Safari кнопка «Поделиться», затем «На экран Домой»; в Chrome меню ⋮, затем «Добавить на главный экран».</p>`;
+  $('#s-save').onclick = async () => {
+    settings = { ...settings, githubToken: $('#s-gh').value.trim(), gistId: $('#s-gist').value.trim(), claudeKey: $('#s-key').value.trim(), model: $('#s-model').value.trim() };
+    write(LS_SET, settings); renderStats();
+    if (settings.githubToken) { setStatus('s-status', 'Синхронизирую…'); await sync(); setStatus('s-status', $('#syncText').querySelector('.err') ? 'Синхронизация не удалась: см. сообщение выше.' : `Готово. Номер хранилища: ${settings.gistId}`, $('#syncText').querySelector('.err') ? 'err' : 'ok'); }
+    else setStatus('s-status', 'Сохранено.', 'ok');
+  };
+  $('#s-export').onclick = () => {
+    const blob = new Blob([JSON.stringify({ app: 'zodynelis', version: 1, cards }, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'zodynelis-' + new Date().toISOString().slice(0, 10) + '.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  $('#s-import').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const data = JSON.parse(await f.text());
+      const incoming = Array.isArray(data) ? data : data.cards;
+      if (!Array.isArray(incoming)) throw new Error();
+      const before = live().length;
+      cards = ZOD.merge(cards, incoming); save(true);
+      setStatus('s-status', `Загружено. Новых слов: ${live().length - before}.`, 'ok');
+    } catch (err) { setStatus('s-status', 'Это не файл словаря Žodynėlis.', 'err'); }
+  };
+}
+
+/* ---------- Переключение разделов ---------- */
+function show(v) {
+  view = v;
+  document.querySelectorAll('.tabs .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  ['study', 'list', 'add', 'settings'].forEach(k => { $('#v-' + k).hidden = k !== v; });
+  if (v === 'study') renderStudy();
+  if (v === 'list') renderList();
+  if (v === 'add') renderAdd();
+  if (v === 'settings') renderSettings();
+}
+document.querySelectorAll('.tabs .chip').forEach(b => b.onclick = () => show(b.dataset.view));
+$('#syncBtn').onclick = sync;
+document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+
+renderStats();
+show(settings.githubToken || live().length ? 'study' : 'settings');
+sync();
+})();
+</script>
+</body>
+</html>
